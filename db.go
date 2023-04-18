@@ -3,6 +3,7 @@ package runn
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -157,6 +158,13 @@ func (rnr *dbRunner) Run(ctx context.Context, q *dbQuery) error {
 								return fmt.Errorf("invalid column: evaluated %s, but got %s(%v): %w", c, t, s, err)
 							}
 							row[c] = d
+						case strings.Contains(t, "JSONB"): // PostgreSQL JSONB
+							var jsonColumn map[string]interface{}
+							err = json.Unmarshal(v, &jsonColumn)
+							if err != nil {
+								return fmt.Errorf("invalid column: evaluated %s, but got %s(%v): %w", c, t, s, err)
+							}
+							row[c] = jsonColumn
 						default: // MySQL: BOOLEAN = TINYINT
 							num, err := strconv.Atoi(s)
 							if err != nil {
